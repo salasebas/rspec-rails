@@ -628,6 +628,24 @@ RSpec.describe "ActiveJob matchers", skip: !RSpec::Rails::FeatureCheck.has_activ
       expect(heavy_lifting_job)
         .to have_been_enqueued.at(a_value_within(5.seconds).of(future))
     end
+
+    context "with global id arguments" do
+      before do
+        RSpec::Mocks.configuration.verify_partial_doubles = false
+        3.times { hello_job.perform_later(GlobalIdModel.new("42")) }
+        allow(GlobalIdModel).to receive(:find).and_call_original
+      end
+
+      it "looks up the expected record once and each job's record once" do
+        expect(hello_job).to have_been_enqueued.with(GlobalIdModel.new("42")).exactly(3)
+        expect(GlobalIdModel).to have_received(:find).exactly(4).times
+      end
+
+      it "does not look up job records when no block is given" do
+        expect(hello_job).to have_been_enqueued.exactly(3)
+        expect(GlobalIdModel).not_to have_received(:find)
+      end
+    end
   end
 
   describe "have_performed_job" do

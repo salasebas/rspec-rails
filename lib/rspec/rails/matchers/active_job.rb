@@ -16,7 +16,7 @@ module RSpec
             @queue = nil
             @priority = nil
             @at = nil
-            @block = proc { }
+            @block = nil
             set_expected_number(:exactly, 1)
           end
 
@@ -108,10 +108,11 @@ module RSpec
         private
 
           def check(jobs)
+            @expected_arguments = nil
+
             @matching_jobs, @unmatching_jobs = jobs.partition do |job|
               if matches_constraints?(job)
-                args = deserialize_arguments(job)
-                @block.call(*args)
+                @block&.call(*deserialize_arguments(job))
                 true
               else
                 false
@@ -169,9 +170,9 @@ module RSpec
 
           def arguments_match?(job)
             if @args.any?
-              args = serialize_and_deserialize_arguments(@args)
+              @expected_arguments ||= serialize_and_deserialize_arguments(@args)
               deserialized_args = deserialize_arguments(job)
-              RSpec::Mocks::ArgumentListMatcher.new(*args).args_match?(*deserialized_args)
+              RSpec::Mocks::ArgumentListMatcher.new(*@expected_arguments).args_match?(*deserialized_args)
             else
               true
             end

@@ -4,6 +4,9 @@
 Enhancements:
 
 * Officially support Rails 8.2.
+* Speed up ActiveJob and `have_enqueued_mail` matchers by deserializing the expected
+  arguments once per match and skipping job argument deserialization when no `with`
+  block is given. (sebastiansala)
 
 Bug Fixes:
 
